@@ -3,6 +3,9 @@ import logging
 from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
+# [[user_id, bot_menu_stage, [[product1, startprice], [product2, startprice]...]]]
+users = list()
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
@@ -36,7 +39,7 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 
 def main() -> None:
-    updater = Updater("secret")
+    updater = Updater("xxx")
 
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
 

@@ -2,6 +2,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import logging
+import sqlite3
 
 from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
@@ -21,16 +22,15 @@ def bt(update):
     #return  markup.call_back()
 '''
 
+
 def start(update: Update, context: CallbackContext) -> None:
     user = update.effective_user
     update.message.reply_markdown_v2(
         fr'Hi {user.mention_markdown_v2()}\!',
     )
-    #dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, bt))
-    #markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Видеокарты', callback_data='1'), InlineKeyboardButton(text='Консоли', callback_data='2')]])
-    #update.message.reply_text(update.message.reply_text("Что желаете?"), reply_markup=markup)
     update.message.reply_markdown_v2(("Что желаете?"))
     update.effective_user.id
+
 
 def help_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('Help!')
@@ -40,8 +40,9 @@ def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
 
     query.answer()
-
-    query.message.reply_text(text=f"Selected option: {query.data}")
+    # tovar = int(input())
+    # tovar = query.data
+    # query.message.reply_text(text=f"Selected option: {query.data}")
 
 
 def echo(update: Update, context: CallbackContext) -> None:
@@ -49,6 +50,7 @@ def echo(update: Update, context: CallbackContext) -> None:
     markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Видеокарты', callback_data='1'), InlineKeyboardButton(text='Консоли', callback_data='2')]])
     update.message.reply_text(update.message.text, reply_markup=markup)
     update.effective_user.id
+    '''
     '''
     count = 0
     p = str(update.message.text)
@@ -74,9 +76,42 @@ def echo(update: Update, context: CallbackContext) -> None:
             #print(i)
     if count == 0:
         update.message.reply_text("Сейчас такого товара в наличии нет")
+        '''
+    a = str(update.message.text)  # от бота мы получаем название
+    aa = a.split()
+    count = 0  # от бота мы получаем консоль это или видеокарта
+    s = "+".join(aa)
+    url = f'https://www.citilink.ru/search/?text='
+    url += s
+    response = requests.get(url)
+    b = re.findall(r'(https?://\S+)', response.text)
+    all_urls = []
+    name_telegram = update.effective_user.id  # тег пользователя
+    for i in b:
+        if 'product' in i and 'add' not in i and ('konsol' in i or 'videokarta' in i):
+            all_urls.append(i.split('"')[0])
+    for i in all_urls:
+        if count >= 3:
+            break
+        abc = requests.get(i)
+        if 'InStock' in abc.text:
+            update.message.reply_text(i)  # вывод ботом
+            count += 1
+    if count == 0:
+        update.message.reply_text("Сейчас такого товара в наличии нет")  # вывод ботом
+        name = 'products_search.db'
+        con = sqlite3.connect(name)
+        cur = con.cursor()
+        result = cur.execute(f"""INSERT INTO all_products
+                              (name_telegram, need_products)
+                              VALUES
+                              ('{name_telegram}', '{a}');""").fetchall()
+        con.commit()
+        con.close()
+
 
 def main() -> None:
-    updater = Updater("5079930288:AAFEddS4PwGccQeiR0Gu-H29xb55t4xLMTs")
+    updater = Updater("5042093003:AAFoLRvTTUolZ044wJ-M8VOQDNQtc78Tn-o")
 
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
 

@@ -1,0 +1,96 @@
+import re
+import requests
+from bs4 import BeautifulSoup
+import logging
+
+from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
+
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+)
+
+logger = logging.getLogger(__name__)
+
+'''
+def bt(update):
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Видеокарты', callback_data='1'),
+                                    InlineKeyboardButton(text='Консоли', callback_data='2')]])
+    update.message.reply_text(update.message.reply_text("Что желаете?"), reply_markup=markup)
+    update.effective_user.id
+    #return  markup.call_back()
+'''
+
+def start(update: Update, context: CallbackContext) -> None:
+    user = update.effective_user
+    update.message.reply_markdown_v2(
+        fr'Hi {user.mention_markdown_v2()}\!',
+    )
+    #dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, bt))
+    #markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Видеокарты', callback_data='1'), InlineKeyboardButton(text='Консоли', callback_data='2')]])
+    #update.message.reply_text(update.message.reply_text("Что желаете?"), reply_markup=markup)
+    update.message.reply_markdown_v2(("Что желаете?"))
+    update.effective_user.id
+
+def help_command(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Help!')
+
+
+def button(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+
+    query.answer()
+
+    query.message.reply_text(text=f"Selected option: {query.data}")
+
+
+def echo(update: Update, context: CallbackContext) -> None:
+    '''
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Видеокарты', callback_data='1'), InlineKeyboardButton(text='Консоли', callback_data='2')]])
+    update.message.reply_text(update.message.text, reply_markup=markup)
+    update.effective_user.id
+    '''
+    count = 0
+    p = str(update.message.text)
+    #print(p)
+    a = p.split()
+    s = "+".join(a)
+    url = f'https://www.citilink.ru/search/?text='
+    url += s
+    response = requests.get(url)
+    #print(response)
+    b = re.findall(r'(https?://\S+)', response.text)
+    all_urls = []
+    for i in b:
+        if 'product' in i and 'add' not in i:
+            all_urls.append(i.split('"')[0])
+    for i in all_urls:
+        if count >= 3:
+            break
+        abc = requests.get(i)
+        if 'InStock' in abc.text:
+            count += 1
+            update.message.reply_text(i)
+            #print(i)
+    if count == 0:
+        update.message.reply_text("Сейчас такого товара в наличии нет")
+
+def main() -> None:
+    updater = Updater("5079930288:AAFEddS4PwGccQeiR0Gu-H29xb55t4xLMTs")
+
+    updater.dispatcher.add_handler(CallbackQueryHandler(button))
+
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("help", help_command))
+
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+
+    updater.start_polling()
+
+    updater.idle()
+
+
+if __name__ == '__main__':
+    main()

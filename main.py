@@ -5,7 +5,6 @@ import sqlite3
 a = input()  # от бота мы получаем название
 aa = a.split()
 count = 0
-tovar = 'pk'  # от бота мы получаем консоль это или видеокарта
 s = "+".join(aa)
 url = f'https://www.citilink.ru/search/?text='
 url += s
@@ -14,12 +13,8 @@ b = re.findall(r'(https?://\S+)', response.text)
 all_urls = []
 name_telegram = '@TEAM_LEAD'  # тег пользователя
 for i in b:
-    if tovar == 'konsol':
-        if 'product' in i and 'add' not in i and 'konsol' in i:
-            all_urls.append(i.split('"')[0])
-    elif tovar == 'pk':
-        if 'product' in i and 'add' not in i and 'videokarta' in i:
-            all_urls.append(i.split('"')[0])
+    if 'product' in i and 'add' not in i and ('konsol' in i or 'videokarta' in i):
+        all_urls.append(i.split('"')[0])
 for i in all_urls:
     if count >= 3:
         break
